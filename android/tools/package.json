@@ -1,0 +1,7 @@
+{
+  "name": "howtocook-android-content",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {"build": "node build-content.js", "test": "node --test build-content.test.js"},
+  "dependencies": {"markdown-it": "14.1.0"}
+}
