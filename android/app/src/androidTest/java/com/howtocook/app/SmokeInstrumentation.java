@@ -46,7 +46,7 @@ public class SmokeInstrumentation extends Instrumentation {
             click("☆ 收藏"); await(() -> text("★ 已收藏") != null, "favorite can be saved");
             runOnMainSync(() -> activity.finish()); waitForIdleSync();
             activity = launch();
-            await(() -> text("我的收藏") != null && find(ListView.class).getCount() > 0, "restart catalog");
+            await(() -> text("离线菜谱 · " + total + " 道") != null, "restart catalog");
             click("我的收藏"); await(() -> text("蒜蓉空心菜  ★") != null, "favorite persists after activity restart");
             runOnMainSync(() -> {
                 ListView list = find(ListView.class);
