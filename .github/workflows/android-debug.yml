@@ -1,0 +1,67 @@
+name: Android Debug APK
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'android/**'
+      - 'dishes/**'
+      - 'tips/**'
+      - 'LICENSE'
+      - '.github/workflows/android-debug.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: android/tools/package-lock.json
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Markdown renderer
+        run: npm ci --prefix android/tools --ignore-scripts
+      - name: Validate offline recipes
+        run: npm test --prefix android/tools
+      - name: Build and check Android app
+        working-directory: android
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+      - name: Verify APK and create checksum
+        run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify android/app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p android/app/build/outputs/delivery
+          cp android/app/build/outputs/apk/debug/app-debug.apk android/app/build/outputs/delivery/HowToCook-debug.apk
+          cd android/app/build/outputs/delivery
+          sha256sum HowToCook-debug.apk > SHA256SUMS.txt
+      - name: Upload installable APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: HowToCook-debug-${{ github.run_number }}
+          path: android/app/build/outputs/delivery/
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Android-test-reports-${{ github.run_number }}
+          path: |
+            android/app/build/reports/tests/
+            android/app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore

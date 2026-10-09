@@ -9,3 +9,10 @@ properdocs.yml
 .idea
 *.iml
 .alma-snapshots
+
+# Android generated files and machine configuration
+android/.gradle/
+android/**/build/
+android/local.properties
+android/tools/node_modules/
+*.apk

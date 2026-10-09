@@ -1,0 +1,34 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.howtocook.app'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.howtocook.app'
+        minSdk 23
+        targetSdk 35
+        versionCode 2
+        versionName '1.1.0'
+        testInstrumentationRunner 'com.howtocook.app.SmokeInstrumentation'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets.main.assets.srcDir layout.buildDirectory.dir('generated/recipeAssets')
+    lint { abortOnError true }
+}
+
+def generateRecipes = tasks.register('generateRecipes', Exec) {
+    workingDir rootProject.file('tools')
+    commandLine 'node', 'build-content.js'
+    inputs.dir(rootProject.file('../dishes'))
+    inputs.dir(rootProject.file('../tips'))
+    inputs.file(rootProject.file('../LICENSE'))
+    inputs.file(rootProject.file('tools/build-content.js'))
+    // The source revision in the attribution must refresh for each build.
+    outputs.upToDateWhen { false }
+}
+tasks.named('preBuild').configure { dependsOn generateRecipes }
+
+dependencies { testImplementation 'junit:junit:4.13.2' }
