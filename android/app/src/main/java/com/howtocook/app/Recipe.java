@@ -4,8 +4,12 @@ import java.text.Normalizer;
 import java.util.Locale;
 
 final class Recipe {
-    final String id, title, category, difficulty, calories, html, searchable;
+    final String id, title, category, difficulty, calories, html, searchable, thumbnail;
     Recipe(String id, String title, String category, String difficulty, String calories, String html, String search) {
+        this(id, title, category, difficulty, calories, html, search, "");
+    }
+    Recipe(String id, String title, String category, String difficulty, String calories, String html, String search, String thumbnail) {
+        this.thumbnail = thumbnail;
         this.id = id; this.title = title; this.category = category;
         this.difficulty = difficulty; this.calories = calories; this.html = html;
         this.searchable = normalize(search);

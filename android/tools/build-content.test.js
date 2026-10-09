@@ -3,7 +3,7 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const {build, render, resolveLink, ROOT, OUTPUT} = require('./build-content');
+const {build, render, thumbnail, resolveLink, ROOT, OUTPUT} = require('./build-content');
 const result = build();
 test('every real recipe is included once and original bytes are retained', () => {
   const ids = new Set(result.recipes.map(r => r.id));
@@ -46,4 +46,15 @@ test('headings support fragment navigation and attribution includes license', ()
   assert.ok(html.includes('id="必备原料和工具"'));
   assert.ok(html.includes('id="操作-1"'));
   assert.ok(fs.readFileSync(path.join(OUTPUT, 'attribution.html'), 'utf8').includes('free and unencumbered'));
+});
+
+test('thumbnails use a real local image from each recipe and skip external images', () => {
+  let count = 0;
+  for (const recipe of result.recipes) if (recipe.thumbnail) {
+    assert.ok(fs.existsSync(path.join(OUTPUT, recipe.thumbnail)));
+    count++;
+  }
+  assert.ok(count > 100);
+  assert.equal(thumbnail('![外图](https://example.com/remote.jpg)\n\n![本地](./1.JPG)', 'dishes/vegetable_dish/蒜蓉空心菜/蒜蓉空心菜.md'), 'content/dishes/vegetable_dish/蒜蓉空心菜/1.JPG');
+  assert.equal(thumbnail('![外图](https://example.com/remote.jpg)', 'README.md'), '');
 });

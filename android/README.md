@@ -2,6 +2,10 @@
 
 中文 Android 菜谱 App，最低支持 Android 6.0(API 23)。首版包含分类浏览、菜名/食材/做法全文搜索、菜谱详情、收藏和离线阅读。收藏保存在本机，卸载应用后清除。
 
+1.1.0 使用蓝色分类首页：顶部搜索、离线阅读提示、十个分类入口、家常菜精选，以及菜谱 / 收藏 / 关于底部导航。分类与搜索结果使用带缩略图的卡片，缩略图来自原菜谱的首张本地图片；没有本地图片的菜谱显示分类图标。详情页统一使用蓝色标题、链接和收藏按钮。
+
+云端 Android 10 模拟器的实际页面截图见 [首页](screenshots/home.png)、[分类](screenshots/category.png)、[详情](screenshots/detail.png)、[收藏](screenshots/favorites.png)。
+
 ## 直接获取 APK
 
 无需下载源码或安装本地开发工具。代码进入 GitHub 后，在仓库的 **Actions → Android Debug APK → Run workflow** 中选择分支并运行。成功后打开该次运行，在 **Artifacts** 下载 `HowToCook-debug-运行编号`，解压即可得到可安装的 `HowToCook-debug.apk` 和 `SHA256SUMS.txt`。产物保留 30 天。
@@ -38,9 +42,9 @@ cd android
 
 ## 验证范围
 
-`tools/build-content.test.js` 检查完整收录、原文与图片字节保留、本地图片及链接可达、失效链接适配、外部图片标识、脚本禁用与来源许可。`RecipeTest` 检查全文搜索、多关键词匹配、分类筛选、空查询和全角输入。
+`tools/build-content.test.js` 的六项测试检查完整收录、原文与图片字节保留、本地图片及链接可达、失效链接适配、外部图片标识、脚本禁用、来源许可，以及本地缩略图来源。`RecipeTest` 的五项测试检查全文搜索、多关键词匹配、分类筛选、空查询和全角输入。
 
-设备冒烟测试位于 `app/src/androidTest/`，使用平台 Instrumentation 验证中文搜索、分类、离线正文与图片、收藏持久化、技巧链接和来源许可。需要可用的云端模拟器：
+设备冒烟测试位于 `app/src/androidTest/`，使用平台 Instrumentation 验证分类首页的十个入口、本地缩略图、中文搜索、分类、离线正文与图片、收藏持久化、技巧链接和来源许可，并保存实际页面截图。云端 Android 10 模拟器关闭 Wi-Fi 和移动数据后已通过该测试。需要可用的云端模拟器：
 
 ```sh
 ./gradlew assembleDebugAndroidTest
@@ -50,5 +54,7 @@ adb shell am instrument -w com.howtocook.app.test/com.howtocook.app.SmokeInstrum
 ```
 
 该测试只在测试过程中临时开启 WebView JavaScript 以读取 DOM；交付应用默认禁用 JavaScript。GitHub Actions 编译此测试 APK，但默认不启动模拟器。
+
+云端模拟器没有 KVM 加速。其旧版 WebView 与 SwiftShader 组合出现 `Invalid font buffer` GPU 栅格化错误；截图验证在模拟器的 `webview-command-line` 中使用 `--disable-gpu-rasterization` 绕过这一环境问题，该参数不写入应用。
 
 GitHub Actions 上传单元测试与 Lint 报告，交付说明另列云端实际安装和模拟器运行结果。真实手机和不同 Android / WebView 版本的完整兼容性测试仍需后续执行。

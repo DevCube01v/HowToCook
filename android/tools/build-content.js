@@ -66,8 +66,18 @@ function render(markdown, current, revision) {
   });
   const source = `${REPO}/blob/${revision}/${encodePath(current)}`;
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'unsafe-inline'"><style>
-body{margin:0;padding:20px 20px 40px;background:#faf8f2;color:#25322b;font:17px/1.8 system-ui,sans-serif;overflow-wrap:anywhere}h1{font-size:27px;line-height:1.4}h2{font-size:21px;margin-top:30px;border-bottom:1px solid #dce4da;padding-bottom:8px}h3{font-size:19px}a{color:#236747}img{max-width:100%;height:auto;border-radius:12px}ul,ol{padding-left:25px}pre{overflow:auto;background:#edf0e8;padding:12px}blockquote,.external-image{border-left:3px solid #d1aa66;margin:16px 0;padding:8px 14px;background:#f1ecdf}table{border-collapse:collapse;display:block;overflow:auto}td,th{padding:8px;border:1px solid #d5dccf}footer{margin-top:36px;border-top:1px solid #dce4da;padding-top:16px;font-size:13px;color:#627266}
+body{margin:0;padding:12px 20px 40px;background:#f7faff;color:#142747;font:16px/1.85 system-ui,sans-serif;overflow-wrap:anywhere}h1{font-size:26px;line-height:1.45;margin:16px 0 24px;font-weight:750;letter-spacing:-.4px}h2{font-size:20px;margin:30px 0 14px;border-left:3px solid #2563eb;padding-left:12px;line-height:1.5}h3{font-size:18px}a{color:#2563eb;text-decoration:underline;text-underline-offset:3px}img{display:block;max-width:100%;height:auto;border-radius:16px;margin:16px auto}ul,ol{padding-left:24px}li{margin:5px 0}pre{overflow:auto;background:#ebf3ff;border-radius:12px;padding:14px}code{background:#ebf3ff;border-radius:4px;padding:1px 4px}pre code{padding:0}blockquote,.external-image{border-left:3px solid #93b4f8;margin:16px 0;padding:12px 16px;background:#ebf3ff;border-radius:0 12px 12px 0}table{border-collapse:collapse;display:block;overflow:auto}td,th{padding:8px;border:1px solid #dbe7f7}footer{margin-top:36px;border:1px solid #dbe7f7;border-radius:14px;padding:16px;font-size:12px;color:#687d9d;background:#fff}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 </style></head><body>${md.render(markdown)}<footer>来源：HowToCook · Anduin2017 与社区贡献者<br>菜谱原文按原 Markdown 呈现，图片与链接适配离线阅读。<br><a href="${source}">查看 GitHub 原文</a> · The Unlicense<br>内容版本：${revision.slice(0, 12)}</footer></body></html>`;
+}
+function thumbnail(markdown, current) {
+  const tokens = new MarkdownIt({html: false}).parse(markdown, {});
+  for (const block of tokens) for (const token of block.children || []) {
+    if (token.type !== 'image') continue;
+    const link = resolveLink(current, token.attrGet('src'));
+    if (link.path) return 'content/' + link.path;
+  }
+  return '';
 }
 function build() {
   const revision = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: ROOT, encoding: 'utf8'}).trim();
@@ -90,7 +100,7 @@ function build() {
     const difficulty = (markdown.match(/预估烹饪难度：\s*(★+)/) || [,''])[1];
     const calories = (markdown.match(/预估卡路里：\s*(\d+)\s*大卡/) || [,''])[1];
     recipes.push({id: relative, title, category, difficulty, calories,
-      html: 'content/' + relative.replace(/\.md$/, '.html'), search: title + '\n' + markdown});
+      html: 'content/' + relative.replace(/\.md$/, '.html'), thumbnail: thumbnail(markdown, relative), search: title + '\n' + markdown});
   }
   fs.writeFileSync(path.join(OUTPUT, 'recipes.json'), JSON.stringify({revision, repository: REPO, categories:Object.values(CATEGORIES), recipes}));
   fs.writeFileSync(path.join(OUTPUT, 'attribution.html'), render(`# 关于下厨指南\n\n本应用的菜谱来自 [HowToCook](https://github.com/Anduin2017/HowToCook)，作者为 Anduin2017 与社区贡献者；本次内容快照来自 [当前仓库](${REPO})。\n\n内容版本：\`${revision}\`\n\n收录 ${recipes.length} 道菜谱，支持分类、全文搜索、收藏与离线阅读。菜谱正文和仓库内图片均内置，无需下载。外部图片保留原始链接，需要联网查看。外部网页通过系统浏览器打开。\n\n菜谱中的难度、热量等信息保持原文。菜谱更新随新版 APK 提供，收藏保存在本机，卸载后清除。\n\n## 许可\n\n${fs.readFileSync(path.join(ROOT, 'LICENSE'), 'utf8')}\n`, 'README.md', revision));
@@ -98,4 +108,4 @@ function build() {
   return {recipes, revision, all};
 }
 if (require.main === module) build();
-module.exports = {build, render, resolveLink, ROOT, OUTPUT};
+module.exports = {build, render, thumbnail, resolveLink, ROOT, OUTPUT};
